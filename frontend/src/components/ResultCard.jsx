@@ -6,14 +6,30 @@ const CFG = {
   High:   { color: '#c0392b', bg: '#fdedec', border: '#f5b7b1', label: 'High Risk',   icon: '✕' },
 };
 
-const ADVICE = {
+const GENERAL_ADVICE = {
   Low:    'Your risk level appears low. Keep up regular exercise, a balanced diet, and annual health check-ups.',
   Medium: 'Moderate risk detected. Schedule a check-up with your doctor and monitor your blood pressure and glucose regularly.',
   High:   'High risk detected. Please consult a healthcare professional as soon as possible for a full assessment.',
 };
 
+function getPersonalizedTips(formData) {
+  if (!formData) return [];
+  const tips = [];
+  if (Number(formData.age) > 60)
+    tips.push('Age is a significant risk factor — more frequent stroke screenings are recommended.');
+  if (Number(formData.avg_glucose_level) > 125)
+    tips.push('Blood glucose is elevated — consult an endocrinologist about glucose management and diabetes screening.');
+  if (Number(formData.bmi) > 30)
+    tips.push('BMI indicates obesity — weight management may meaningfully reduce stroke and cardiovascular risk.');
+  if (Number(formData.hypertension) === 1)
+    tips.push('Manage blood pressure with prescribed medication and a low-sodium diet as advised by your doctor.');
+  if (Number(formData.heart_disease) === 1)
+    tips.push('Cardiac monitoring is strongly advised — work closely with a cardiologist for ongoing assessment.');
+  return tips;
+}
+
 function CircleGauge({ pct, color }) {
-  const R   = 54;
+  const R    = 54;
   const circ = 2 * Math.PI * R;
   const fill = (Math.min(pct, 100) / 100) * circ;
 
@@ -43,9 +59,10 @@ function CircleGauge({ pct, color }) {
   );
 }
 
-export default function ResultCard({ result }) {
+export default function ResultCard({ result, formData }) {
   const { probability, risk_level } = result;
-  const cfg = CFG[risk_level];
+  const cfg  = CFG[risk_level];
+  const tips = getPersonalizedTips(formData);
 
   return (
     <div className="result-card" style={{ background: cfg.bg, borderColor: cfg.border }}>
@@ -68,7 +85,15 @@ export default function ResultCard({ result }) {
         </div>
       </div>
 
-      <p className="result-advice">{ADVICE[risk_level]}</p>
+      <p className="result-advice">{GENERAL_ADVICE[risk_level]}</p>
+
+      {tips.length > 0 && (
+        <ul className="advice-bullets">
+          {tips.map((tip, i) => (
+            <li key={i}>{tip}</li>
+          ))}
+        </ul>
+      )}
 
       <p className="disclaimer">
         This tool is for informational purposes only and does not replace professional medical advice.

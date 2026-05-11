@@ -11,6 +11,7 @@ MODEL_DIR  = os.path.join(_BACKEND, 'model')
 sys.path.insert(0, _BACKEND)
 from utils.preprocessing import preprocess_input
 from utils.validation import validate
+from utils.db import save_prediction
 
 predict_bp = Blueprint('predict', __name__)
 
@@ -44,10 +45,14 @@ def predict():
         else:
             risk_level = 'High'
 
-        return jsonify({
+        result = {
             'prediction':  prediction,
             'probability': round(probability * 100, 2),
             'risk_level':  risk_level,
-        })
+        }
+
+        save_prediction(data, result)
+
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 400

@@ -10,6 +10,7 @@ Why this approach:
 - class_weight='balanced' adds a second layer of minority-class emphasis.
 """
 import os
+import json
 import pickle
 import numpy as np
 import pandas as pd
@@ -17,7 +18,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.metrics import classification_report, roc_auc_score
+from sklearn.metrics import classification_report, roc_auc_score, average_precision_score, confusion_matrix
 from imblearn.over_sampling import SMOTE
 
 DATASET_PATH = r'C:\Users\abdel\Downloads\healthcare-dataset-stroke-data.csv'
@@ -130,3 +131,47 @@ with open(os.path.join(model_dir, 'model.pkl'),   'wb') as f: pickle.dump(model,
 with open(os.path.join(model_dir, 'scaler.pkl'),  'wb') as f: pickle.dump(scaler,   f)
 with open(os.path.join(model_dir, 'encoder.pkl'), 'wb') as f: pickle.dump(encoders, f)
 print("\nSaved: model.pkl  scaler.pkl  encoder.pkl")
+
+# ── stats.json ────────────────────────────────────────────────────────────────
+probs_test  = model.predict_proba(X_test)[:, 1]
+y_pred_test = (probs_test >= 0.25).astype(int)
+
+roc = float(roc_auc_score(y_test, probs_test))
+pr  = float(average_precision_score(y_test, probs_test))
+
+cv_s = cross_val_score(
+    model, X_scaled, y,
+    cv=StratifiedKFold(5, shuffle=True, random_state=42),
+    scoring='roc_auc'
+)
+
+cm_vals = confusion_matrix(y_test, y_pred_test)
+tn, fp, fn, tp = cm_vals.ravel()
+
+# Average absolute LR coefficients across the 5 calibrated sub-estimators
+coef_matrix = np.array([
+    np.abs(cc.estimator.coef_[0])
+    for cc in model.calibrated_classifiers_
+])
+mean_coefs = coef_matrix.mean(axis=0)
+feat_importances = {
+    feat: float(round(imp, 6))
+    for feat, imp in zip(feat_names, mean_coefs)
+}
+
+stats_data = {
+    'roc_auc':            round(roc, 4),
+    'pr_auc':             round(pr,  4),
+    'cv_mean':            round(float(cv_s.mean()), 4),
+    'cv_std':             round(float(cv_s.std()),  4),
+    'confusion_matrix':   {'tn': int(tn), 'fp': int(fp), 'fn': int(fn), 'tp': int(tp)},
+    'feature_importances': feat_importances,
+    'threshold':          0.25,
+    'n_samples':          int(len(df)),
+    'stroke_rate':        round(float(y.mean() * 100), 2),
+}
+
+stats_path = os.path.join(model_dir, 'stats.json')
+with open(stats_path, 'w') as f:
+    json.dump(stats_data, f, indent=2)
+print(f"Saved: stats.json  (ROC-AUC={roc:.4f}  PR-AUC={pr:.4f})")

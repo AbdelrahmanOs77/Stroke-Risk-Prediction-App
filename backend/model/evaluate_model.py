@@ -60,7 +60,11 @@ aucs = cross_val_score(model, X_scaled, y, cv=cv, scoring='roc_auc')
 print(f"  CV ROC-AUC (5-fold)   : {aucs.mean():.4f} +/- {aucs.std():.4f}")
 
 feat_names  = list(X.columns)
-importances = model.feature_importances_
+coef_matrix = np.array([
+    np.abs(cc.estimator.coef_[0])
+    for cc in model.calibrated_classifiers_
+])
+importances = coef_matrix.mean(axis=0)
 ranked      = sorted(zip(feat_names, importances), key=lambda x: x[1], reverse=True)
 
 print("\n-- Feature Importances --")

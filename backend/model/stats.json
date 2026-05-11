@@ -1,0 +1,31 @@
+{
+  "roc_auc": 0.8339,
+  "pr_auc": 0.2067,
+  "cv_mean": 0.8362,
+  "cv_std": 0.0224,
+  "confusion_matrix": {
+    "tn": 542,
+    "fp": 430,
+    "fn": 8,
+    "tp": 42
+  },
+  "feature_importances": {
+    "gender": 0.04793,
+    "age": 2.250826,
+    "hypertension": 0.760967,
+    "heart_disease": 0.904943,
+    "ever_married": 0.093811,
+    "work_type": 0.052628,
+    "Residence_type": 0.106886,
+    "avg_glucose_level": 0.200141,
+    "bmi": 0.079844,
+    "smoking_status": 0.034297,
+    "age_x_hypertension": 0.447149,
+    "age_x_heart_disease": 0.710729,
+    "age_x_glucose": 0.25291,
+    "clinical_risk_score": 0.452289
+  },
+  "threshold": 0.25,
+  "n_samples": 5110,
+  "stroke_rate": 4.87
+}
