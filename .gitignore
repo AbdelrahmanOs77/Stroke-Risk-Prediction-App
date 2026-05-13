@@ -1,0 +1,16 @@
+# Node dependencies
+frontend/node_modules/
+frontend/.cache/
+frontend/build/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
